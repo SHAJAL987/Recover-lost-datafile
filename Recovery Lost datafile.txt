@@ -1,0 +1,107 @@
+	  R E C O V E R/ R E S T O R E     L O S T    D A T A F I  L E S
+=========================================================================================
+	
+	SETP-1: You should check your database log_mode.
+	------	if it is enabled or ARCHIVELOG mode SKIP STEP-2.
+                
+		SQL> archive log list;
+		SQL> select log_mode from v$database;
+
+	STEP-2: Enable Archive log mode
+	-------
+		=====================ENABLE===========================
+		
+		i) Shutdown Database
+
+			SQL> shutdown immediate;
+
+	       ii) Going to database on to mount stage.
+
+			SQL> startup mount;
+
+	      iii) Set Archive log
+
+			SQL> alter database archivelog;
+			SQL> SELECT  LOG_MODE
+		             FROM    v$database;
+			SQL> archive log list;
+
+	       iv) Now Open database
+
+			SQL> alter database open;
+
+	       ==========================================================
+
+	STEP-3: create table space,table and insert data those table
+        -------
+		SQL> create tablespace test_ts datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf' size 10M;
+
+        	SQL> create table testtable(id number(5)) tablespace test_ts;
+
+        	SQL> insert into testtable(id) select * from testtable;
+
+		SQL> select count(*) from testtable;
+		
+	STEP-4: now check for confirmation tablespaces and Schema.
+	-------
+		SQL> select tablespace_name, segment_name from  dba_segments where segment_name = 'TESTTABLE';
+		SQL> col segment_name for a30;
+
+        STEP-5: now delete datafile 
+	-------
+		SQL> exit;
+		[oracle@db ~]$ rm -rf '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf'
+		
+	STEP-6: check data from testtable. it will show data from buffer cache.
+	------
+		SQL> select count(*) from testtable;
+	
+	STEP-7: now clean database buffer cache and try to show data from testtable.
+	-------
+		SQL> alter system flush buffer_cache;
+		SQL> select count(*) from testtable; -- getting error
+
+	STEP-8: for recover this datafile we should create datafile like as deleted datafile but it will get error
+	-------
+		SQL> alter database create datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf' as '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf';
+
+	STEP-9: We deleted our datafile in online thats why it getting error. now need to drop table space from offline
+	------  
+		SQL> alter database datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf' offline drop;
+ 	
+	STEP-10: Now Write this query again.
+	--------
+		SQL> alter database create datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf' as '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf';
+
+	STEP-11: Now Recover drop file.
+	--------
+		SQL> recover datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf';
+
+	STEP-12: Datafile Put in online.
+	-------
+		SQL> alter database datafile '/u01/app/oracle/oradata/ORCL/datafile/ts_test02.dbf' online;
+
+	STEP-13: Now see your lost data.
+	--------
+		SQL> select count(*) from testtable;
+
+
+
+ 
+
+
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+

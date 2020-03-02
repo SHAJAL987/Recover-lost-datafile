@@ -1,0 +1,45 @@
+DATAFILE file Lost 
+================================
+Archive log mode-Enabled
+
+create tablespace test_ts datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf' size 10M;
+
+ 
+create table testtable (id number(5))tablespace test_ts;
+ 
+insert into testtable (id) select * from testtable;
+
+SQL＞select count(*) from testtable;
+
+  COUNT(*)
+----------  - before deleting datafile
+    524288
+
+ SQL＞select count(*) from testtable;
+
+  COUNT(*)
+----------   - After recovery
+    524288
+
+select tablespace_name, segment_name from  dba_segments where segment_name = 'TESTTABLE';
+ 
+ 
+ alter system flush buffer_cache;
+ 
+ alter database create datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf' as '/u01/app/oracle/oradata/testdb/ts_test02.dbf'
+ 
+ 
+ alter database datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf' offline drop;
+
+ alter database create datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf' as '/u01/app/oracle/oradata/testdb/ts_test02.dbf'
+ 
+ recover datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf';
+ 
+  
+ alter database datafile '/u01/app/oracle/oradata/testdb/ts_test02.dbf' online;
+ 
+ 
+ select count(*) from TESTTABLE;
+ 
+ ===================================================
+
